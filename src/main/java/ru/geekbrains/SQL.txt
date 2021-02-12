@@ -1,0 +1,71 @@
+//PostgreSQL
+
+//Фильмы
+CREATE TABLE public.film
+(
+    id integer NOT NULL DEFAULT nextval('film_id_seq'::regclass),
+    name character(255) COLLATE pg_catalog."default",
+    duration smallint,
+    CONSTRAINT film_pkey PRIMARY KEY (id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.film
+    OWNER to postgres;
+	
+
+//Сеанс
+CREATE TABLE public.seance
+(
+    id integer NOT NULL DEFAULT nextval('seance_id_seq'::regclass),
+    film_id integer NOT NULL DEFAULT nextval('seance_film_id_seq'::regclass),
+    start_date timestamp without time zone NOT NULL,
+    price money NOT NULL,
+    CONSTRAINT seance_pkey PRIMARY KEY (id),
+    CONSTRAINT film_fk FOREIGN KEY (film_id)
+        REFERENCES public.film (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.seance
+    OWNER to postgres;
+	
+	
+//Билет
+CREATE TABLE public.ticket
+(
+    id integer NOT NULL DEFAULT nextval('ticket_id_seq'::regclass),
+    name character(255) COLLATE pg_catalog."default" NOT NULL,
+    seance_id integer NOT NULL DEFAULT nextval('ticket_seance_id_seq'::regclass),
+    CONSTRAINT ticket_pkey PRIMARY KEY (id),
+    CONSTRAINT seance_fk FOREIGN KEY (seance_id)
+        REFERENCES public.seance (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.ticket
+    OWNER to postgres;
+	
+
+//Cелект
+select 
+	f.name,
+	f.duration,
+	s.start_date,
+	count(tt.id),
+	sum(s.price)
+	from public.film f,
+		public.seance s,
+		public.ticket tt
+	where f.id = s.film_id
+	and tt.seance_id = s.id
+	group by f.name, f.duration, s.start_date
